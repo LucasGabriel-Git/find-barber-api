@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String    @id @default(cuid())
+  name                  String
+  email                 String    @unique
+  password              String
+  confirmationCode      String?
+  confirmationExpiresAt DateTime?
+  isVerified            Boolean   @default(false)
+  type                  Type      @default(CLIENT)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  profile      Profile?
+  barberShop   BarberShops[]
+  queue        Queue[]
+  rating       Rating[]
+  scheduling   Scheduling[]
+  LoginHistory LoginHistory?
+}
+
+model LoginHistory {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [user_id], references: [id])
+  user_id   String   @unique
+  ip        String
+  userAgent String
+  location  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Type {
+  CLIENT
+  BARBER
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  bio       String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BarberShops {
+  id         String       @id @default(cuid())
+  nome       String
+  endereco   String
+  telefone   String
+  latitude   Float
+  longitude  Float
+  photo      String?
+  rating     Rating[]
+  ownerId    String       @unique
+  owner      User         @relation(fields: [ownerId], references: [id])
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  schedules  Schedules[]
+  scheduling Scheduling[]
+  queue      Queue[]
+}
+
+model Schedules {
+  id          String      @id @default(cuid())
+  barber      BarberShops @relation(fields: [barber_id], references: [id])
+  barber_id   String      @unique
+  day_of_week Int
+  start_time  String
+  end_time    String
+  interval    Int
+  date        DateTime
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Scheduling {
+  id        String      @id @default(cuid())
+  user_id   String
+  user      User        @relation(fields: [user_id], references: [id])
+  barber_id String
+  barber    BarberShops @relation(fields: [barber_id], references: [id])
+  date      DateTime
+  time      String
+  status    Status      @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+enum Status {
+  PENDING
+  CONFIRMED
+  CANCELED
+  FINISHED
+}
+
+model Rating {
+  id        String      @id @default(cuid())
+  user_id   String
+  user      User        @relation(fields: [user_id], references: [id])
+  barber_id String
+  barber    BarberShops @relation(fields: [barber_id], references: [id])
+  rating    Float
+  comment   String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Queue {
+  id        String      @id @default(cuid())
+  user_id   String
+  user      User        @relation(fields: [user_id], references: [id])
+  barber_id String
+  barber    BarberShops @relation(fields: [barber_id], references: [id])
+  date      DateTime
+  time      String
+  status    Status      @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+enum StatusQueue {
+  IN_QUEUE
+  ATTENDED
+  CANCELED
+}
